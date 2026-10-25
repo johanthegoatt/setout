@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setout — how many tiles, and where to start laying them</title>
+  <meta name="description" content="Work out how many tiles a floor or wall needs, with the right spare margin, and where to start so you don't end on a thin sliver cut. Runs in your browser; nothing you type is uploaded.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f7d78'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='9' height='9' rx='1.5'/%3E%3Crect x='17' y='6' width='9' height='9' rx='1.5'/%3E%3Crect x='6' y='17' width='9' height='9' rx='1.5'/%3E%3Crect x='17' y='17' width='9' height='9' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <h1><span class="logo" aria-hidden="true"></span> Setout</h1>
+      <p class="tag">How many tiles you need, with spares, and where to start laying them so the wall doesn't finish on a thin sliver.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <form id="form" class="card" autocomplete="off">
+      <fieldset class="group">
+        <legend>The surface</legend>
+        <div class="field-row">
+          <label class="field">
+            <span>Width</span>
+            <input id="room-w" inputmode="decimal" placeholder="e.g. 3.4">
+          </label>
+          <label class="field">
+            <span>Length / height</span>
+            <input id="room-l" inputmode="decimal" placeholder="e.g. 2.1">
+          </label>
+          <label class="field narrow">
+            <span>in</span>
+            <select id="room-unit">
+              <option value="m">metres</option>
+              <option value="cm">cm</option>
+              <option value="ft">feet</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">Measure the widest and longest points. A floor uses width and length; a wall uses width and height.</p>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>The tile</legend>
+        <div class="field-row">
+          <label class="field">
+            <span>Tile width</span>
+            <input id="tile-w" inputmode="decimal" placeholder="e.g. 300">
+          </label>
+          <label class="field">
+            <span>Tile height</span>
+            <input id="tile-h" inputmode="decimal" placeholder="e.g. 300">
+          </label>
+          <label class="field narrow">
+            <span>in</span>
+            <select id="tile-unit">
+              <option value="mm">mm</option>
+              <option value="cm">cm</option>
+              <option value="in">inches</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Grout gap (mm)</span>
+            <input id="gap" inputmode="decimal" value="3">
+          </label>
+          <label class="field">
+            <span>Pattern</span>
+            <select id="pattern">
+              <option value="straight">Straight (grid)</option>
+              <option value="brick">Brick / offset</option>
+              <option value="diagonal">Diagonal (45&deg;)</option>
+              <option value="herringbone">Herringbone</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Extra spare margin (%)</span>
+            <input id="extra" inputmode="decimal" value="0">
+          </label>
+          <label class="field">
+            <span>Tiles per box (optional)</span>
+            <input id="per-box" inputmode="numeric" placeholder="e.g. 10">
+          </label>
+        </div>
+        <p class="hint">The pattern sets a baseline spare margin. Add more for a room full of corners, pipes or alcoves.</p>
+      </fieldset>
+    </form>
+
+    <div class="out" id="out" aria-live="polite"></div>
+
+    <div class="actions">
+      <button id="share" class="ghost" type="button">Copy a link to this</button>
+      <span id="share-done" class="share-done" aria-live="polite"></span>
+    </div>
+
+    <section class="note">
+      <h2>Why "where to start" matters</h2>
+      <p>Laying full tiles flush from one wall is the easy way, but it leaves the whole leftover as a single
+      cut against the far wall. If that comes out as a thin sliver it is fiddly to cut and the eye goes
+      straight to it. The trade rule is to keep every cut as large as you can and never below about half a
+      tile, so when a flush start would leave a sliver, Setout centres the field instead and splits the
+      leftover across both ends. These are planning figures: always check them against the coverage printed
+      on the tile box, and dry-lay a row before fixing anything.</p>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>Everything runs in your browser. Nothing you type is uploaded. <a href="https://github.com/johanthegoatt/setout">Source</a>.</p>
+  </footer>
+
+  <!-- Chip the tile -->
+  <div id="chip-dock" class="chip-dock">
+    <button id="chip-hide" class="chip-hide" type="button" aria-label="Hide Chip">tuck away</button>
+    <div id="chip-bubble" class="chip-bubble" role="status" aria-live="polite"></div>
+    <button id="chip" class="chip" type="button" data-mood="calm" aria-label="Chip the tile. Tap for a tip.">
+      <span class="chip-body" aria-hidden="true">
+        <span class="chip-face">
+          <span class="chip-eye l"></span>
+          <span class="chip-eye r"></span>
+          <span class="chip-mouth"></span>
+        </span>
+      </span>
+    </button>
+  </div>
+
+  <script src="src/core.js"></script>
+  <script src="src/chip.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
