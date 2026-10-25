@@ -1,0 +1,10 @@
+{
+  "name": "setout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "How many tiles a floor or wall needs, with the right spare margin, and where to start laying them so you don't finish on a thin sliver cut. Runs in the browser, nothing uploaded. With Chip the tile.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
