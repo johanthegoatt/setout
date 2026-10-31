@@ -8,6 +8,7 @@ Live: https://setout.johanthegoat.xyz
 
 - **Count.** Give the surface size and the tile size and it works out the tiles to buy. It folds the grout joint into each tile's coverage and adds a spare margin on top for breakages and cuts. If you enter how many tiles come in a box, it turns the count into boxes and tells you how many spares you'll have left over for repairs later.
 - **Set-out.** The useful part. Laying full tiles flush from one wall leaves the whole leftover as a single cut against the far wall, and if that comes out thin it is fiddly to cut and the eye goes straight to it. Setout works out that cut on each axis, flags it when it would be a sliver, and shows a centred start that splits the leftover across both ends so every edge cut lands at half a tile or more.
+- **Openings.** An area you won't tile, a window or a door, comes off the count. But every tile that meets the opening's edge is cut and the offcut is usually too small to use elsewhere, so the ring of cut tiles around each opening is added back as whole tiles rather than pretending the whole opening is saved.
 - **Share.** The whole input lives in the link, in the part of the URL a browser never sends to a server, so you can send a plan to whoever is buying without anything leaving your device.
 
 ## How it's built
