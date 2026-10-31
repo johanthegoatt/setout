@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-unit", "gap", "pattern", "extra", "per-box"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-unit", "gap", "pattern", "extra", "per-box", "open-w", "open-h"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -15,7 +15,8 @@
     return {
       rw: el["room-w"].value.trim(), rl: el["room-l"].value.trim(), ru: el["room-unit"].value,
       tw: el["tile-w"].value.trim(), th: el["tile-h"].value.trim(), tu: el["tile-unit"].value,
-      gap: el.gap.value.trim(), pat: el.pattern.value, box: el["per-box"].value.trim()
+      gap: el.gap.value.trim(), pat: el.pattern.value, box: el["per-box"].value.trim(),
+      ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim()
     };
   }
 
@@ -30,6 +31,8 @@
     if (s.gap != null) el.gap.value = s.gap;
     if (s.pat) el.pattern.value = s.pat;
     if (s.box != null) el["per-box"].value = s.box;
+    if (s.ow != null) el["open-w"].value = s.ow;
+    if (s.oh != null) el["open-h"].value = s.oh;
   }
 
   // mm -> a friendly length, in cm for small cuts and mm for the exact value.
@@ -79,7 +82,8 @@
           '<div class="cell big"><span class="k">Tiles to buy</span><span class="v">' + r.tilesNeeded + '</span></div>' +
           boxLine +
         '</div>' +
-        '<p class="msg">Covers ' + r.areaM2 + ' m² at ' + r.wastePct + '% over the bare count, for breakages and cuts. Keep a few spare for repairs.</p>' +
+        '<p class="msg">Covers ' + r.areaM2 + ' m² at ' + r.wastePct + '% over the bare count, for breakages and cuts. Keep a few spare for repairs.' +
+          (r.openingsAreaM2 > 0 ? ' Takes ' + r.openingsAreaM2 + ' m² off for the opening and adds ' + r.openingCutTiles + ' tiles back for the cuts around its edge.' : '') + '</p>' +
       '</div>' +
       '<div class="result setout">' +
         '<h3>Where to start laying</h3>' +
@@ -96,7 +100,8 @@
       room: { w: s.rw, l: s.rl, unit: s.ru },
       tile: { w: s.tw, h: s.th, unit: s.tu },
       gapMm: parseFloat(s.gap), pattern: s.pat,
-      extraWastePct: parseFloat(s.extra || "0"), perBox: s.box
+      extraWastePct: parseFloat(s.extra || "0"), perBox: s.box,
+      openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : []
     });
     var kind = render(r);
     if (window.Chip) {
