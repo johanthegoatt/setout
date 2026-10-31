@@ -99,3 +99,34 @@ test("a shared link round-trips the whole input", function () {
   assert.deepStrictEqual(back, state);
   assert.strictEqual(S.unpack("@@not valid@@"), null);
 });
+
+test("a window opening comes off the area but adds the ring of cut tiles", function () {
+  var base = { room: { w: 3, l: 2.4, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3, pattern: "straight" };
+  var plain = S.estimate(base);
+  var withWin = S.estimate(Object.assign({ openings: [{ w: 1.2, h: 1.2, unit: "m" }] }, base));
+  // gross 7.2 m2, window 1.44 m2 -> net 5.76 m2 tiled
+  assert.strictEqual(withWin.grossAreaM2, 7.2);
+  assert.strictEqual(withWin.openingsAreaM2, 1.44);
+  assert.strictEqual(withWin.areaM2, 5.76);
+  // the opening still forces cut tiles around its edge
+  assert.ok(withWin.openingCutTiles > 0);
+  // and the net count is lower than tiling the whole wall
+  assert.ok(withWin.tilesNeeded < plain.tilesNeeded);
+});
+
+test("no openings leaves the count unchanged", function () {
+  var base = { room: { w: 3, l: 2.4, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3, pattern: "straight" };
+  var a = S.estimate(base);
+  var b = S.estimate(Object.assign({ openings: [] }, base));
+  assert.strictEqual(a.tilesNeeded, b.tilesNeeded);
+  assert.strictEqual(b.openingsAreaM2, 0);
+  assert.strictEqual(b.openingCutTiles, 0);
+  assert.strictEqual(b.grossAreaM2, b.areaM2);
+});
+
+test("a zero or malformed opening is ignored", function () {
+  var base = { room: { w: 3, l: 2.4, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 };
+  var r = S.estimate(Object.assign({ openings: [{ w: 0, h: 1, unit: "m" }, { w: "x", h: "y", unit: "m" }] }, base));
+  assert.strictEqual(r.openingsAreaM2, 0);
+  assert.strictEqual(r.openingCutTiles, 0);
+});

@@ -124,11 +124,28 @@
     var extra = isFinite(parseFloat(opts.extraWastePct)) ? Math.max(0, parseFloat(opts.extraWastePct)) : 0;
     var wastePct = PATTERN[pat].waste + extra;
 
-    var areaM2 = (rw / 1000) * (rl / 1000);
+    var grossAreaM2 = (rw / 1000) * (rl / 1000);
+
+    // Openings (a window, a door) aren't tiled, so their area comes off the
+    // count. But every tile that meets an opening's edge is cut, and the offcut
+    // is usually too small to use elsewhere, so the ring of cut tiles around
+    // each opening is added back as whole tiles. The waste margin covers the
+    // odd cut; these are the extra, interior cuts an opening forces.
+    var openingsAreaM2 = 0, openingCutTiles = 0;
+    var modAvgMm = (tw + th) / 2 + gap;
+    (opts.openings || []).forEach(function (o) {
+      var ow = toMm(o && o.w, o && o.unit);
+      var oh = toMm(o && o.h, o && o.unit);
+      if (!(ow > 0) || !(oh > 0)) return;
+      openingsAreaM2 += (ow / 1000) * (oh / 1000);
+      if (modAvgMm > 0) openingCutTiles += Math.ceil((2 * (ow + oh)) / modAvgMm);
+    });
+    var areaM2 = Math.max(0, grossAreaM2 - openingsAreaM2);
+
     // One tile covers the tile plus half a joint on each side: (tile+gap).
     var moduleAreaM2 = ((tw + gap) / 1000) * ((th + gap) / 1000);
     var baseTiles = areaM2 / moduleAreaM2;
-    var withWaste = baseTiles * (1 + wastePct / 100);
+    var withWaste = baseTiles * (1 + wastePct / 100) + openingCutTiles;
     var tilesNeeded = Math.ceil(withWaste - 1e-9);
 
     var boxes = null, spareTiles = null;
@@ -141,6 +158,9 @@
     return {
       ok: true,
       areaM2: round2(areaM2),
+      grossAreaM2: round2(grossAreaM2),
+      openingsAreaM2: round2(openingsAreaM2),
+      openingCutTiles: openingCutTiles,
       pattern: pat,
       patternLabel: PATTERN[pat].label,
       wastePct: round2(wastePct),
