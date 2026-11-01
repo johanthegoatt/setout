@@ -8,6 +8,7 @@ Live: https://setout.johanthegoat.xyz
 
 - **Count.** Give the surface size and the tile size and it works out the tiles to buy. It folds the grout joint into each tile's coverage and adds a spare margin on top for breakages and cuts. If you enter how many tiles come in a box, it turns the count into boxes and tells you how many spares you'll have left over for repairs later.
 - **Set-out.** The useful part. Laying full tiles flush from one wall leaves the whole leftover as a single cut against the far wall, and if that comes out thin it is fiddly to cut and the eye goes straight to it. Setout works out that cut on each axis, flags it when it would be a sliver, and shows a centred start that splits the leftover across both ends so every edge cut lands at half a tile or more.
+- **Grout.** Add the tile thickness and Setout works out the grout to buy as well, by the tiler's standard sum, and turns it into tubs if you give a tub size.
 - **Openings.** An area you won't tile, a window or a door, comes off the count. But every tile that meets the opening's edge is cut and the offcut is usually too small to use elsewhere, so the ring of cut tiles around each opening is added back as whole tiles rather than pretending the whole opening is saved.
 - **Share.** The whole input lives in the link, in the part of the URL a browser never sends to a server, so you can send a plan to whoever is buying without anything leaving your device.
 
@@ -25,6 +26,7 @@ runs the engine tests on Node (no dependencies). CI runs them on Node 20, 22 and
 
 - **Spare margins.** The baselines follow the figures tile retailers and the Tile Council of North America handbook publish: about **10%** for a straight or brick lay, **15%** for a diagonal, and **20%** for herringbone, because angled cuts waste more. A room full of corners, pipes and alcoves needs more, which is what the adjustable extra margin is for. Guides put a cut-heavy room at 25–30%.
 - **Set-out rule.** British Standard BS 5385 for wall and floor tiling says cuts should be kept to a minimum, decided in advance, made as large as possible and put where they are least noticeable. Trade guides put a number on "as large as possible": aim for no perimeter cut smaller than half a tile, with about a third as the absolute minimum. Centring the field is the standard way to get there, so that is what Setout recommends when a flush start would leave a sliver.
+- **Grout.** The joint fill follows the tiler's standard coverage sum, kg/m² = ((L + W) / (L × W)) × joint width × tile thickness × grout density, with all four dimensions in millimetres. The density defaults to **1.7 kg/dm³** for a cement-based grout (a 300 × 300 × 8 mm tile at a 3 mm joint works out to about 0.27 kg/m²); it varies by product, so it is editable. Confirm against your grout bag's own coverage figure and buy a little over.
 
 These are planning figures. Tiles, trowels and rooms all vary, so always check against the coverage printed on the tile box and dry-lay a row before you fix anything.
 
