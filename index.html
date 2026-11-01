@@ -63,6 +63,10 @@
             <span>Tile height</span>
             <input id="tile-h" inputmode="decimal" placeholder="e.g. 300">
           </label>
+          <label class="field">
+            <span>Thickness</span>
+            <input id="tile-t" inputmode="decimal" placeholder="for grout">
+          </label>
           <label class="field narrow">
             <span>in</span>
             <select id="tile-unit">
@@ -97,7 +101,17 @@
             <input id="per-box" inputmode="numeric" placeholder="e.g. 10">
           </label>
         </div>
-        <p class="hint">The pattern sets a baseline spare margin. Add more for a room full of corners, pipes or alcoves.</p>
+        <div class="field-row">
+          <label class="field">
+            <span>Grout density (kg/dm³)</span>
+            <input id="grout-density" inputmode="decimal" placeholder="1.7">
+          </label>
+          <label class="field">
+            <span>Grout tub size (kg)</span>
+            <input id="tub-kg" inputmode="decimal" placeholder="e.g. 5">
+          </label>
+        </div>
+        <p class="hint">The pattern sets a baseline spare margin. Add more for a room full of corners, pipes or alcoves. Add the tile thickness and Setout works out the grout too.</p>
       </fieldset>
     </form>
 

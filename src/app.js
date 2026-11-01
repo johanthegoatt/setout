@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-unit", "gap", "pattern", "extra", "per-box", "open-w", "open-h"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "open-w", "open-h"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -14,8 +14,9 @@
   function readState() {
     return {
       rw: el["room-w"].value.trim(), rl: el["room-l"].value.trim(), ru: el["room-unit"].value,
-      tw: el["tile-w"].value.trim(), th: el["tile-h"].value.trim(), tu: el["tile-unit"].value,
+      tw: el["tile-w"].value.trim(), th: el["tile-h"].value.trim(), tt: el["tile-t"].value.trim(), tu: el["tile-unit"].value,
       gap: el.gap.value.trim(), pat: el.pattern.value, box: el["per-box"].value.trim(),
+      gd: el["grout-density"].value.trim(), tk: el["tub-kg"].value.trim(),
       ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim()
     };
   }
@@ -27,10 +28,13 @@
     if (s.ru) el["room-unit"].value = s.ru;
     if (s.tw != null) el["tile-w"].value = s.tw;
     if (s.th != null) el["tile-h"].value = s.th;
+    if (s.tt != null) el["tile-t"].value = s.tt;
     if (s.tu) el["tile-unit"].value = s.tu;
     if (s.gap != null) el.gap.value = s.gap;
     if (s.pat) el.pattern.value = s.pat;
     if (s.box != null) el["per-box"].value = s.box;
+    if (s.gd != null) el["grout-density"].value = s.gd;
+    if (s.tk != null) el["tub-kg"].value = s.tk;
     if (s.ow != null) el["open-w"].value = s.ow;
     if (s.oh != null) el["open-h"].value = s.oh;
   }
@@ -75,6 +79,24 @@
 
     var slivers = (r.across && r.across.sliver) || (r.along && r.along.sliver);
 
+    var groutBlock = "";
+    if (r.grout) {
+      var g = r.grout;
+      var tubLine = g.tubs != null
+        ? ' — about ' + g.tubs + ' × ' + g.tubKg + ' kg tub' + (g.tubs === 1 ? '' : 's')
+        : '';
+      groutBlock =
+        '<div class="result">' +
+          '<h3>Grout</h3>' +
+          '<div class="grid">' +
+            '<div class="cell big"><span class="k">Grout to buy</span><span class="v">' + g.totalKg + ' kg</span></div>' +
+            '<div class="cell"><span class="k">Per m²</span><span class="v">' + g.kgPerM2 + '</span></div>' +
+          '</div>' +
+          '<p class="msg">About ' + g.totalKg + ' kg of grout for the joints at ' + g.thickMm + ' mm deep' + tubLine +
+          '. Based on a ' + g.density + ' kg/dm³ cement grout; check your product\'s own figure, and buy a little over.</p>' +
+        '</div>';
+    }
+
     out.innerHTML =
       '<div class="result">' +
         '<h3>' + r.areaM2 + ' m² · ' + r.patternLabel + ' · ' + r.wastePct + '% spare</h3>' +
@@ -85,6 +107,7 @@
         '<p class="msg">Covers ' + r.areaM2 + ' m² at ' + r.wastePct + '% over the bare count, for breakages and cuts. Keep a few spare for repairs.' +
           (r.openingsAreaM2 > 0 ? ' Takes ' + r.openingsAreaM2 + ' m² off for the opening and adds ' + r.openingCutTiles + ' tiles back for the cuts around its edge.' : '') + '</p>' +
       '</div>' +
+      groutBlock +
       '<div class="result setout">' +
         '<h3>Where to start laying</h3>' +
         axisRow("Across the width", r.across) +
@@ -98,9 +121,10 @@
     var s = readState();
     var r = S.estimate({
       room: { w: s.rw, l: s.rl, unit: s.ru },
-      tile: { w: s.tw, h: s.th, unit: s.tu },
+      tile: { w: s.tw, h: s.th, thickness: s.tt, unit: s.tu },
       gapMm: parseFloat(s.gap), pattern: s.pat,
       extraWastePct: parseFloat(s.extra || "0"), perBox: s.box,
+      groutDensity: s.gd, tubKg: s.tk,
       openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : []
     });
     var kind = render(r);
@@ -128,7 +152,7 @@
 
   // Tips follow where the eye is: the tile fields talk about quantity, the
   // pattern and gap about set-out.
-  ["tile-w", "tile-h", "per-box", "extra"].forEach(function (id) {
+  ["tile-w", "tile-h", "tile-t", "per-box", "extra", "grout-density", "tub-kg"].forEach(function (id) {
     el[id].addEventListener("focus", function () { if (window.Chip) window.Chip.context("quantity"); });
   });
   ["pattern", "gap"].forEach(function (id) {
