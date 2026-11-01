@@ -155,8 +155,34 @@
       spareTiles = boxes * perBox - tilesNeeded;
     }
 
+    // Grout. The powder that fills the joints, by the tiler's standard sum:
+    //   kg/m2 = ((L + W) / (L x W)) x joint x depth x density      (L,W,joint,depth in mm)
+    // The joint depth is the tile thickness. Density is about 1.7 kg/dm3 for a
+    // cement-based grout (a 300x300x8 mm tile at a 3 mm joint works out to
+    // ~0.27 kg/m2); it varies by product, so it's editable. A tub size turns
+    // the total into tubs. Only worked out once a tile thickness is given.
+    var grout = null;
+    var thick = toMm(opts.tile && opts.tile.thickness, opts.tile && opts.tile.unit);
+    if (thick > 0 && gap > 0 && tw > 0 && th > 0) {
+      var density = parseFloat(opts.groutDensity);
+      if (!(density > 0)) density = 1.7;
+      var kgPerM2 = ((tw + th) / (tw * th)) * gap * thick * density;
+      var totalKg = kgPerM2 * areaM2;
+      var tubKg = parseFloat(opts.tubKg);
+      var tubs = tubKg > 0 ? Math.ceil(totalKg / tubKg - 1e-9) : null;
+      grout = {
+        density: round2(density),
+        thickMm: round2(thick),
+        kgPerM2: round2(kgPerM2),
+        totalKg: round2(totalKg),
+        tubKg: tubKg > 0 ? tubKg : null,
+        tubs: tubs
+      };
+    }
+
     return {
       ok: true,
+      grout: grout,
       areaM2: round2(areaM2),
       grossAreaM2: round2(grossAreaM2),
       openingsAreaM2: round2(openingsAreaM2),
