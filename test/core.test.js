@@ -130,3 +130,40 @@ test("a zero or malformed opening is ignored", function () {
   assert.strictEqual(r.openingsAreaM2, 0);
   assert.strictEqual(r.openingCutTiles, 0);
 });
+
+// Grout: the tiler's standard sum, kg/m2 = ((L+W)/(L*W)) * joint * depth * density.
+test("grout uses the standard coverage formula", function () {
+  var r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" },
+    gapMm: 3, pattern: "straight"
+  });
+  assert.ok(r.grout, "grout block present once a thickness is given");
+  assert.strictEqual(r.grout.kgPerM2, 0.27); // (600/90000)*3*8*1.7 = 0.272
+  assert.strictEqual(r.grout.totalKg, 1.09); // over 4 m2
+  assert.strictEqual(r.grout.density, 1.7);
+});
+
+test("a grout tub size turns the total into tubs", function () {
+  var r = S.estimate({
+    room: { w: 3, l: 3, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" },
+    gapMm: 3, tubKg: 5
+  });
+  // 0.272 kg/m2 * 9 m2 = 2.448 kg -> one 5 kg tub
+  assert.strictEqual(r.grout.tubs, 1);
+});
+
+test("a typed grout density overrides the default", function () {
+  var r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" },
+    gapMm: 3, groutDensity: 1.5
+  });
+  assert.strictEqual(r.grout.density, 1.5);
+  assert.strictEqual(r.grout.kgPerM2, 0.24); // 0.16 litres/m2 * 1.5
+});
+
+test("no grout figure without a tile thickness or a joint", function () {
+  var noThick = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 });
+  assert.strictEqual(noThick.grout, null);
+  var noGap = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" }, gapMm: 0 });
+  assert.strictEqual(noGap.grout, null);
+});
