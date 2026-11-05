@@ -167,3 +167,40 @@ test("no grout figure without a tile thickness or a joint", function () {
   var noGap = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" }, gapMm: 0 });
   assert.strictEqual(noGap.grout, null);
 });
+
+// Adhesive: the trowel notch steps up with the tile size (BS 5385), and wet
+// areas, external work and large-format tiles need 95% coverage, not 65%.
+test("trowel notch and usage step up with tile size", function () {
+  var small = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 150, h: 150, unit: "mm" }, gapMm: 2 });
+  var med = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 });
+  var big = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 600, h: 600, unit: "mm" }, gapMm: 3 });
+  var huge = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 1200, h: 600, unit: "mm" }, gapMm: 3 });
+  assert.strictEqual(small.adhesive.notchMm, 3);
+  assert.strictEqual(med.adhesive.notchMm, 6);
+  assert.strictEqual(big.adhesive.notchMm, 10);
+  assert.strictEqual(huge.adhesive.notchMm, 12);
+  assert.ok(huge.adhesive.kgPerM2 > big.adhesive.kgPerM2);
+  assert.ok(big.adhesive.kgPerM2 > med.adhesive.kgPerM2);
+});
+
+test("large-format forces a solid bed, back-buttering and 95% coverage", function () {
+  var huge = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 900, h: 900, unit: "mm" }, gapMm: 3 });
+  assert.strictEqual(huge.adhesive.largeFormat, true);
+  assert.strictEqual(huge.adhesive.solidBed, true);
+  assert.strictEqual(huge.adhesive.backButter, true);
+  assert.strictEqual(huge.adhesive.coverPct, 95);
+});
+
+test("a dry internal floor is 65% coverage, a wet one 95%", function () {
+  var dry = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 });
+  var wet = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3, wet: true });
+  assert.strictEqual(dry.adhesive.coverPct, 65);
+  assert.strictEqual(wet.adhesive.coverPct, 95);
+});
+
+test("adhesive total and bags follow the tiled area and bag size", function () {
+  var r = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3, adhesiveBagKg: 20 });
+  // 4 m2 x 3.8 kg/m2 = 15.2 kg -> ceil(15.2/20) = 1 bag
+  assert.strictEqual(r.adhesive.totalKg, 15.2);
+  assert.strictEqual(r.adhesive.bags, 1);
+});
