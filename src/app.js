@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "open-w", "open-h"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -17,6 +17,7 @@
       tw: el["tile-w"].value.trim(), th: el["tile-h"].value.trim(), tt: el["tile-t"].value.trim(), tu: el["tile-unit"].value,
       gap: el.gap.value.trim(), pat: el.pattern.value, box: el["per-box"].value.trim(),
       gd: el["grout-density"].value.trim(), tk: el["tub-kg"].value.trim(),
+      wet: el.wet.checked ? 1 : 0,
       ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim()
     };
   }
@@ -35,6 +36,7 @@
     if (s.box != null) el["per-box"].value = s.box;
     if (s.gd != null) el["grout-density"].value = s.gd;
     if (s.tk != null) el["tub-kg"].value = s.tk;
+    if (s.wet != null) el.wet.checked = !!s.wet;
     if (s.ow != null) el["open-w"].value = s.ow;
     if (s.oh != null) el["open-h"].value = s.oh;
   }
@@ -97,6 +99,26 @@
         '</div>';
     }
 
+    var adhesiveBlock = "";
+    if (r.adhesive) {
+      var a = r.adhesive;
+      var notchText = a.solidBed
+        ? 'a solid bed (about ' + a.notchMm + ' mm), back-buttering the tile'
+        : 'a ' + a.notchMm + ' mm notched trowel';
+      adhesiveBlock =
+        '<div class="result">' +
+          '<h3>Adhesive</h3>' +
+          '<div class="grid">' +
+            '<div class="cell big"><span class="k">Adhesive to buy</span><span class="v">' + a.totalKg + ' kg</span></div>' +
+            '<div class="cell"><span class="k">Bags (' + a.bagKg + ' kg)</span><span class="v">' + a.bags + '</span></div>' +
+            '<div class="cell"><span class="k">Trowel notch</span><span class="v">' + a.notchMm + '<span class="u"> mm</span></span></div>' +
+          '</div>' +
+          '<p class="msg">Spread with ' + notchText + '. Aim for at least ' + a.coverPct + '% of the back bonded' +
+          (a.coverPct === 95 ? ' (wet areas, outdoors and large-format tiles need near-full coverage).' : ' for a dry internal floor.') +
+          ' About ' + a.kgPerM2 + ' kg/m²; a makers’ figure, so check your product and buy a little over.</p>' +
+        '</div>';
+    }
+
     out.innerHTML =
       '<div class="result">' +
         '<h3>' + r.areaM2 + ' m² · ' + r.patternLabel + ' · ' + r.wastePct + '% spare</h3>' +
@@ -108,6 +130,7 @@
           (r.openingsAreaM2 > 0 ? ' Takes ' + r.openingsAreaM2 + ' m² off for the opening and adds ' + r.openingCutTiles + ' tiles back for the cuts around its edge.' : '') + '</p>' +
       '</div>' +
       groutBlock +
+      adhesiveBlock +
       '<div class="result setout">' +
         '<h3>Where to start laying</h3>' +
         axisRow("Across the width", r.across) +
@@ -124,7 +147,7 @@
       tile: { w: s.tw, h: s.th, thickness: s.tt, unit: s.tu },
       gapMm: parseFloat(s.gap), pattern: s.pat,
       extraWastePct: parseFloat(s.extra || "0"), perBox: s.box,
-      groutDensity: s.gd, tubKg: s.tk,
+      groutDensity: s.gd, tubKg: s.tk, wet: !!s.wet,
       openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : []
     });
     var kind = render(r);
