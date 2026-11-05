@@ -180,9 +180,48 @@
       };
     }
 
+    // Adhesive. How much tile adhesive the floor needs, and the trowel notch to
+    // spread it with. The notch (and so the bed depth, and so the usage) steps up
+    // with the tile size, per BS 5385 / adhesive-maker guidance: small tiles take
+    // a fine notch, large-format tiles a deep notch or a solid bed. The minimum
+    // bonded coverage is 65% for a dry internal area, but 95% for wet areas, any
+    // external work and all large-format tiles, which is why those use more. The
+    // kg/m2 are mid-range figures from the makers' coverage tables and vary by
+    // product, so they're an estimate; the notch and coverage rule are the firm
+    // part. A bag size turns the total into bags.
+    var adhesive = null;
+    if (tw > 0 && th > 0) {
+      var maxEdge = Math.max(tw, th);
+      var notchMm, kgPerM2A, bed;
+      if (maxEdge <= 150) { notchMm = 3; kgPerM2A = 2.5; bed = "notch"; }
+      else if (maxEdge <= 300) { notchMm = 6; kgPerM2A = 3.8; bed = "notch"; }
+      else if (maxEdge <= 600) { notchMm = 10; kgPerM2A = 5.5; bed = "notch"; }
+      else { notchMm = 12; kgPerM2A = 8.0; bed = "solid"; }
+      var largeFormat = maxEdge > 600;
+      // Wet areas, external work and large-format tiles need near-full coverage.
+      var wet = !!opts.wet;
+      var coverPct = (wet || largeFormat) ? 95 : 65;
+      var totalKgA = kgPerM2A * areaM2;
+      var bagKgA = parseFloat(opts.adhesiveBagKg);
+      if (!(bagKgA > 0)) bagKgA = 20;
+      adhesive = {
+        maxEdgeMm: round2(maxEdge),
+        notchMm: notchMm,
+        solidBed: bed === "solid",
+        largeFormat: largeFormat,
+        backButter: largeFormat,
+        coverPct: coverPct,
+        kgPerM2: round2(kgPerM2A),
+        totalKg: round2(totalKgA),
+        bagKg: bagKgA,
+        bags: Math.ceil(totalKgA / bagKgA - 1e-9)
+      };
+    }
+
     return {
       ok: true,
       grout: grout,
+      adhesive: adhesive,
       areaM2: round2(areaM2),
       grossAreaM2: round2(grossAreaM2),
       openingsAreaM2: round2(openingsAreaM2),
