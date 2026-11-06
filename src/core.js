@@ -218,10 +218,32 @@
       };
     }
 
+    // Tile trim (edge trim). A tiled area that ends in mid-wall, wraps an
+    // external corner or frames a window reveal needs a trim strip over the
+    // exposed tile edge, both to finish it and to protect the glaze. Trim is
+    // sold in fixed lengths (commonly 2.5 m), so you take the total exposed edge
+    // and round up to whole lengths, keeping a little spare for mitred corner
+    // cuts. Only worked out when an exposed edge length is given.
+    var trim = null;
+    var edgeM = parseFloat(opts.trimEdgeM);
+    if (isFinite(edgeM) && edgeM > 0) {
+      var pieceM = parseFloat(opts.trimLengthM);
+      if (!(pieceM > 0)) pieceM = 2.5;
+      // A 10% allowance for mitres and offcuts, as with the tile waste.
+      var withSpare = edgeM * 1.1;
+      trim = {
+        edgeM: round2(edgeM),
+        pieceM: round2(pieceM),
+        withSpareM: round2(withSpare),
+        pieces: Math.ceil(withSpare / pieceM - 1e-9)
+      };
+    }
+
     return {
       ok: true,
       grout: grout,
       adhesive: adhesive,
+      trim: trim,
       areaM2: round2(areaM2),
       grossAreaM2: round2(grossAreaM2),
       openingsAreaM2: round2(openingsAreaM2),
