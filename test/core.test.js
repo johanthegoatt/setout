@@ -204,3 +204,29 @@ test("adhesive total and bags follow the tiled area and bag size", function () {
   assert.strictEqual(r.adhesive.totalKg, 15.2);
   assert.strictEqual(r.adhesive.bags, 1);
 });
+
+test("trim: exposed edge rounds up to whole trim lengths with a spare", () => {
+  const r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3,
+    trimEdgeM: 5
+  });
+  assert.ok(r.ok && r.trim);
+  // 5 m + 10% = 5.5 m; 2.5 m pieces -> 3 pieces
+  assert.strictEqual(r.trim.pieces, 3);
+  assert.strictEqual(r.trim.pieceM, 2.5);
+});
+
+test("trim: a custom trim length is respected", () => {
+  const r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3,
+    trimEdgeM: 6, trimLengthM: 3
+  });
+  // 6 + 10% = 6.6 m; 3 m pieces -> 3 pieces
+  assert.strictEqual(r.trim.pieces, 3);
+  assert.strictEqual(r.trim.pieceM, 3);
+});
+
+test("trim: no exposed edge means no trim block", () => {
+  const r = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 });
+  assert.strictEqual(r.trim, null);
+});
