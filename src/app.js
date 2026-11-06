@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h", "trim-edge", "trim-len"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -18,7 +18,8 @@
       gap: el.gap.value.trim(), pat: el.pattern.value, box: el["per-box"].value.trim(),
       gd: el["grout-density"].value.trim(), tk: el["tub-kg"].value.trim(),
       wet: el.wet.checked ? 1 : 0,
-      ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim()
+      ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim(),
+      te: el["trim-edge"].value.trim(), tl: el["trim-len"].value.trim()
     };
   }
 
@@ -39,6 +40,8 @@
     if (s.wet != null) el.wet.checked = !!s.wet;
     if (s.ow != null) el["open-w"].value = s.ow;
     if (s.oh != null) el["open-h"].value = s.oh;
+    if (s.te != null) el["trim-edge"].value = s.te;
+    if (s.tl != null) el["trim-len"].value = s.tl;
   }
 
   // mm -> a friendly length, in cm for small cuts and mm for the exact value.
@@ -99,6 +102,21 @@
         '</div>';
     }
 
+    var trimBlock = "";
+    if (r.trim) {
+      var t = r.trim;
+      trimBlock =
+        '<div class="result">' +
+          '<h3>Edge trim</h3>' +
+          '<div class="grid">' +
+            '<div class="cell big"><span class="k">Trim to buy</span><span class="v">' + t.pieces + ' × ' + t.pieceM + ' m</span></div>' +
+            '<div class="cell"><span class="k">Exposed edge</span><span class="v">' + t.edgeM + ' m</span></div>' +
+          '</div>' +
+          '<p class="msg">' + t.edgeM + ' m of exposed edge, plus a little for mitres (' + t.withSpareM + ' m), in ' +
+          t.pieceM + ' m lengths. Trim finishes and protects a tile edge that ends in the open, wraps an external corner or frames a window reveal.</p>' +
+        '</div>';
+    }
+
     var adhesiveBlock = "";
     if (r.adhesive) {
       var a = r.adhesive;
@@ -131,6 +149,7 @@
       '</div>' +
       groutBlock +
       adhesiveBlock +
+      trimBlock +
       '<div class="result setout">' +
         '<h3>Where to start laying</h3>' +
         axisRow("Across the width", r.across) +
@@ -148,7 +167,8 @@
       gapMm: parseFloat(s.gap), pattern: s.pat,
       extraWastePct: parseFloat(s.extra || "0"), perBox: s.box,
       groutDensity: s.gd, tubKg: s.tk, wet: !!s.wet,
-      openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : []
+      openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : [],
+      trimEdgeM: s.te === "" ? undefined : s.te, trimLengthM: s.tl === "" ? undefined : s.tl
     });
     var kind = render(r);
     if (window.Chip) {
