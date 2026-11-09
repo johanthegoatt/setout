@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h", "trim-edge", "trim-len"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h", "trim-edge", "trim-len", "movement-kind"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -19,7 +19,8 @@
       gd: el["grout-density"].value.trim(), tk: el["tub-kg"].value.trim(),
       wet: el.wet.checked ? 1 : 0,
       ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim(),
-      te: el["trim-edge"].value.trim(), tl: el["trim-len"].value.trim()
+      te: el["trim-edge"].value.trim(), tl: el["trim-len"].value.trim(),
+      mk: el["movement-kind"].value
     };
   }
 
@@ -42,6 +43,7 @@
     if (s.oh != null) el["open-h"].value = s.oh;
     if (s.te != null) el["trim-edge"].value = s.te;
     if (s.tl != null) el["trim-len"].value = s.tl;
+    if (s.mk) el["movement-kind"].value = s.mk;
   }
 
   // mm -> a friendly length, in cm for small cuts and mm for the exact value.
@@ -137,6 +139,31 @@
         '</div>';
     }
 
+    var movementBlock = "";
+    if (r.movement) {
+      var mv = r.movement;
+      var jointMsg;
+      if (mv.intermediate === 0) {
+        jointMsg = 'A joint around the perimeter and at the door threshold is enough here. Keep the tiling off the walls with a flexible joint rather than grout, so the floor can move.';
+      } else {
+        jointMsg = 'As well as the perimeter joint, this floor is big enough to want ' + mv.intermediate +
+          ' intermediate joint' + (mv.intermediate === 1 ? '' : 's') + ' — ' +
+          mv.across + ' across the width and ' + mv.along + ' along the length — dividing it into ' +
+          mv.bays + ' bays of about ' + mv.bayAreaM2 + ' m². They let the floor expand without cracking the tiles.';
+      }
+      movementBlock =
+        '<div class="result">' +
+          '<h3>Movement joints</h3>' +
+          '<div class="grid">' +
+            '<div class="cell big"><span class="k">Intermediate joints</span><span class="v">' + mv.intermediate + '</span></div>' +
+            '<div class="cell"><span class="k">Bays</span><span class="v">' + mv.bays + '</span></div>' +
+            '<div class="cell"><span class="k">Max bay</span><span class="v">' + mv.spacingM + '<span class="u"> m</span></span></div>' +
+          '</div>' +
+          '<p class="msg">' + jointMsg + ' These spacings follow BS 5385 for ' + mv.label.toLowerCase() +
+          ' tiling; the standard is the authority, so treat this as a prompt to plan the joints, not a drawing.</p>' +
+        '</div>';
+    }
+
     out.innerHTML =
       '<div class="result">' +
         '<h3>' + r.areaM2 + ' m² · ' + r.patternLabel + ' · ' + r.wastePct + '% spare</h3>' +
@@ -150,6 +177,7 @@
       groutBlock +
       adhesiveBlock +
       trimBlock +
+      movementBlock +
       '<div class="result setout">' +
         '<h3>Where to start laying</h3>' +
         axisRow("Across the width", r.across) +
@@ -168,7 +196,8 @@
       extraWastePct: parseFloat(s.extra || "0"), perBox: s.box,
       groutDensity: s.gd, tubKg: s.tk, wet: !!s.wet,
       openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : [],
-      trimEdgeM: s.te === "" ? undefined : s.te, trimLengthM: s.tl === "" ? undefined : s.tl
+      trimEdgeM: s.te === "" ? undefined : s.te, trimLengthM: s.tl === "" ? undefined : s.tl,
+      movementKind: s.mk
     });
     var kind = render(r);
     if (window.Chip) {
