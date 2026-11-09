@@ -230,3 +230,47 @@ test("trim: no exposed edge means no trim block", () => {
   const r = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3 });
   assert.strictEqual(r.trim, null);
 });
+
+// --- movement joints (BS 5385) ---
+
+test("a small room needs no intermediate joints, just the perimeter", function () {
+  var m = S.movementJoints(4000, 3000, "normal");
+  assert.strictEqual(m.perimeter, true);
+  assert.strictEqual(m.across, 0);
+  assert.strictEqual(m.along, 0);
+  assert.strictEqual(m.intermediate, 0);
+  assert.strictEqual(m.bays, 1);
+});
+
+test("a long internal run gets an intermediate joint past ~10 m", function () {
+  var m = S.movementJoints(4000, 12000, "normal");
+  assert.strictEqual(m.along, 1); // 12 m / 10 m spacing -> one joint
+  assert.strictEqual(m.across, 0);
+  assert.strictEqual(m.bays, 2);
+});
+
+test("underfloor heating tightens the spacing and the bay area cap", function () {
+  var normal = S.movementJoints(6000, 6000, "normal");
+  var heated = S.movementJoints(6000, 6000, "heated");
+  assert.strictEqual(normal.intermediate, 0); // 36 m2, under the 100 cap, <=10 m
+  assert.ok(heated.intermediate > 0, "heated floor needs intermediate joints");
+  assert.ok(heated.bayAreaM2 <= 25 + 1e-6, "every heated bay within 25 m2");
+  assert.strictEqual(heated.spacingM, 5);
+});
+
+test("the bay-area cap splits the longer side to keep bays roughly square", function () {
+  var m = S.movementJoints(5000, 10000, "heated"); // 50 m2
+  assert.ok(m.bayAreaM2 <= 25 + 1e-6);
+  assert.ok(m.along >= m.across, "the longer side takes the joints");
+});
+
+test("estimate carries the movement-joint plan", function () {
+  var r = S.estimate({
+    room: { w: 4, l: 12, unit: "m" },
+    tile: { w: 300, h: 300, unit: "mm" },
+    gapMm: 3, movementKind: "normal"
+  });
+  assert.strictEqual(r.ok, true);
+  assert.ok(r.movement);
+  assert.strictEqual(r.movement.along, 1);
+});
