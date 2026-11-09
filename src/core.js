@@ -52,6 +52,60 @@
 
   function round2(x) { return Math.round(x * 100) / 100; }
 
+  // -------------------------------------------------------- movement joints
+
+  // A tiled floor expands and contracts with heat and moisture. Without breaks
+  // to take up that movement the stress cracks tiles or lifts them off the bed,
+  // so BS 5385 calls for movement (expansion) joints: one around the whole
+  // perimeter and at door thresholds, one over any structural joint, and
+  // intermediate joints that divide a large floor into bays. For a normal
+  // internal floor the bays run up to about 10 m each way, kept roughly square;
+  // over underfloor heating they're tighter (around 5 m, and no bay much over
+  // 25 m2), and outdoors tighter still (3-5 m). These follow the installer
+  // guidance published around BS 5385-3; the standard is the authority, so
+  // Setout flags where joints are likely needed rather than designing them.
+  var MOVEMENT = {
+    normal:   { spacingM: 10, bayCapM2: 100, label: "Internal floor" },
+    heated:   { spacingM: 5,  bayCapM2: 25,  label: "Underfloor heating" },
+    external: { spacingM: 4,  bayCapM2: 20,  label: "External / exposed" }
+  };
+
+  // Count the intermediate joints each way to keep every bay within the bay
+  // size and area for its kind. `wMm`,`lMm` are the room sides in millimetres.
+  function movementJoints(wMm, lMm, kind) {
+    var m = MOVEMENT[kind] ? MOVEMENT[kind] : MOVEMENT.normal;
+    var w = (wMm > 0 ? wMm : 0) / 1000, l = (lMm > 0 ? lMm : 0) / 1000;
+    if (!(w > 0) || !(l > 0)) return null;
+
+    // Start from the span rule: a joint whenever a run passes the spacing.
+    var across = Math.max(0, Math.ceil(w / m.spacingM) - 1);
+    var along = Math.max(0, Math.ceil(l / m.spacingM) - 1);
+
+    // Then tighten if a bay is still over the area cap, splitting the longer
+    // side until the bay area is within the cap (keeps bays roughly square).
+    function bayArea() {
+      return (w / (across + 1)) * (l / (along + 1));
+    }
+    var guard = 0;
+    while (bayArea() > m.bayCapM2 + 1e-9 && guard < 200) {
+      if (w / (across + 1) >= l / (along + 1)) across += 1; else along += 1;
+      guard += 1;
+    }
+
+    return {
+      kind: m === MOVEMENT[kind] ? kind : "normal",
+      label: m.label,
+      spacingM: m.spacingM,
+      bayCapM2: m.bayCapM2,
+      perimeter: true,              // always a perimeter joint
+      across: across,               // intermediate joints across the width
+      along: along,                 // intermediate joints along the length
+      intermediate: across + along, // total intermediate joints
+      bays: (across + 1) * (along + 1),
+      bayAreaM2: round2(bayArea())
+    };
+  }
+
   // ---------------------------------------------------------- set-out (1 axis)
 
   // Along one wall of length L (mm), with a tile+joint repeat of `module` mm,
@@ -258,7 +312,9 @@
       spareTiles: spareTiles,
       // Set-out on each axis. Width of room uses tile width; length uses height.
       across: axisSetOut(rw, tw, gap),
-      along: axisSetOut(rl, th, gap)
+      along: axisSetOut(rl, th, gap),
+      // Movement joints for the floor's size and setting (BS 5385).
+      movement: movementJoints(rw, rl, opts.movementKind)
     };
   }
 
@@ -284,8 +340,8 @@
   }
 
   return {
-    IN: IN, TO_MM: TO_MM, PATTERN: PATTERN,
-    toMm: toMm, axisSetOut: axisSetOut, estimate: estimate,
-    pack: pack, unpack: unpack
+    IN: IN, TO_MM: TO_MM, PATTERN: PATTERN, MOVEMENT: MOVEMENT,
+    toMm: toMm, axisSetOut: axisSetOut, movementJoints: movementJoints,
+    estimate: estimate, pack: pack, unpack: unpack
   };
 });
