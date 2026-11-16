@@ -274,3 +274,48 @@ test("estimate carries the movement-joint plan", function () {
   assert.ok(r.movement);
   assert.strictEqual(r.movement.along, 1);
 });
+
+test("tile weight per m2 is thickness times density", function () {
+  // an 8 mm tile at 2.3 kg/dm3 weighs ~18.4 kg/m2
+  assert.strictEqual(S.tileKgPerM2(8, 2.3), 18.4);
+  // stone is denser
+  assert.ok(S.tileKgPerM2(10, 2.7) > S.tileKgPerM2(10, 2.3));
+  assert.strictEqual(S.tileKgPerM2(0, 2.3), 0);
+});
+
+test("wall weight check flags a background that can't take the tile", function () {
+  // thick heavy tiles on skimmed gypsum (20 kg/m2 limit) should fail
+  var r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" },
+    tile: { w: 300, h: 600, thickness: 12, unit: "mm" },
+    gapMm: 3, background: "gypsum"
+  });
+  assert.ok(r.ok);
+  assert.ok(r.weight, "weight block present");
+  assert.strictEqual(r.weight.limitKgM2, 20);
+  assert.ok(r.weight.totalKgM2 > 20);
+  assert.strictEqual(r.weight.ok, false);
+});
+
+test("same tiles pass on a stronger background", function () {
+  var r = S.estimate({
+    room: { w: 2, l: 2, unit: "m" },
+    tile: { w: 300, h: 600, thickness: 12, unit: "mm" },
+    gapMm: 3, background: "render"
+  });
+  assert.strictEqual(r.weight.limitKgM2, 50);
+  assert.strictEqual(r.weight.ok, true);
+  assert.ok(r.weight.headroomKgM2 > 0);
+});
+
+test("no wall weight check for a floor or when the background is not set", function () {
+  var floor = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" }, gapMm: 3, background: "none" });
+  assert.strictEqual(floor.weight, null);
+  var unset = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, thickness: 8, unit: "mm" }, gapMm: 3 });
+  assert.strictEqual(unset.weight, null);
+});
+
+test("wall weight needs a tile thickness to work out", function () {
+  var r = S.estimate({ room: { w: 2, l: 2, unit: "m" }, tile: { w: 300, h: 300, unit: "mm" }, gapMm: 3, background: "plasterboard" });
+  assert.strictEqual(r.weight, null);
+});
