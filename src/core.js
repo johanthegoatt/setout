@@ -52,6 +52,35 @@
 
   function round2(x) { return Math.round(x * 100) / 100; }
 
+  // --------------------------------------------------------- wall weight
+
+  // A tiled wall hangs its whole weight on the background, and each background
+  // can only safely carry so much. Tile straight onto skimmed plaster or old
+  // plasterboard with heavy tiles and the lot can pull away, so BS 5385-1 sets a
+  // safe weight per square metre for each kind of wall. These are the figures
+  // the standard and the adhesive makers (BAL, Weber) publish; above the limit
+  // you overboard with a tile backer board or batten out. Setout works out the
+  // weight of the tile plus its adhesive bed and flags when the background won't
+  // take it. (Floors carry weight through the slab, so this is a wall check.)
+  var WALL_BACKGROUND = {
+    none:         { limit: Infinity, label: "Floor, or don't check" },
+    gypsum:       { limit: 20, label: "Gypsum plaster (skimmed)" },
+    plasterboard: { limit: 32, label: "Plasterboard (direct)" },
+    plywood:      { limit: 30, label: "Plywood (WBP, 15 mm+)" },
+    render:       { limit: 50, label: "Cement:sand render" },
+    backer:       { limit: 60, label: "Tile backer board" }
+  };
+
+  // Weight of the tile alone per square metre. A tile's weight is its thickness
+  // times its density; a typical ceramic or porcelain is about 2.3 kg/dm3, so
+  // the kg/m2 works out to the thickness in mm times the density. Natural stone
+  // (marble, granite) is denser, nearer 2.7, so set the density for stone.
+  function tileKgPerM2(thickMm, densityKgDm3) {
+    if (!(thickMm > 0)) return 0;
+    var d = densityKgDm3 > 0 ? densityKgDm3 : 2.3;
+    return thickMm * d; // (thickMm/1000 m) x (d*1000 kg/m3) = thickMm x d
+  }
+
   // -------------------------------------------------------- movement joints
 
   // A tiled floor expands and contracts with heat and moisture. Without breaks
@@ -293,11 +322,35 @@
       };
     }
 
+    // Wall weight. For a wall background, weigh the tile and its adhesive bed
+    // per square metre against the background's safe limit (BS 5385-1).
+    var weight = null;
+    var bg = WALL_BACKGROUND[opts.background];
+    if (bg && opts.background !== "none" && thick > 0 && adhesive) {
+      var tileDensity = parseFloat(opts.tileDensity);
+      if (!(tileDensity > 0)) tileDensity = 2.3;
+      var tileKg = round2(tileKgPerM2(thick, tileDensity));
+      var adhKg = adhesive.kgPerM2;
+      var totalKg = round2(tileKg + adhKg);
+      weight = {
+        background: opts.background,
+        label: bg.label,
+        limitKgM2: bg.limit,
+        density: round2(tileDensity),
+        tileKgM2: tileKg,
+        adhesiveKgM2: adhKg,
+        totalKgM2: totalKg,
+        headroomKgM2: round2(bg.limit - totalKg),
+        ok: totalKg <= bg.limit
+      };
+    }
+
     return {
       ok: true,
       grout: grout,
       adhesive: adhesive,
       trim: trim,
+      weight: weight,
       areaM2: round2(areaM2),
       grossAreaM2: round2(grossAreaM2),
       openingsAreaM2: round2(openingsAreaM2),
@@ -340,8 +393,8 @@
   }
 
   return {
-    IN: IN, TO_MM: TO_MM, PATTERN: PATTERN, MOVEMENT: MOVEMENT,
+    IN: IN, TO_MM: TO_MM, PATTERN: PATTERN, MOVEMENT: MOVEMENT, WALL_BACKGROUND: WALL_BACKGROUND,
     toMm: toMm, axisSetOut: axisSetOut, movementJoints: movementJoints,
-    estimate: estimate, pack: pack, unpack: unpack
+    tileKgPerM2: tileKgPerM2, estimate: estimate, pack: pack, unpack: unpack
   };
 });
