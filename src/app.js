@@ -6,7 +6,7 @@
   var S = window.Setout;
   var $ = function (id) { return document.getElementById(id); };
 
-  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h", "trim-edge", "trim-len", "movement-kind"];
+  var ids = ["room-w", "room-l", "room-unit", "tile-w", "tile-h", "tile-t", "tile-unit", "gap", "pattern", "extra", "per-box", "grout-density", "tub-kg", "wet", "open-w", "open-h", "trim-edge", "trim-len", "movement-kind", "background"];
   var el = {};
   ids.forEach(function (id) { el[id] = $(id); });
   var out = $("out");
@@ -20,7 +20,8 @@
       wet: el.wet.checked ? 1 : 0,
       ow: el["open-w"].value.trim(), oh: el["open-h"].value.trim(),
       te: el["trim-edge"].value.trim(), tl: el["trim-len"].value.trim(),
-      mk: el["movement-kind"].value
+      mk: el["movement-kind"].value,
+      bg: el.background.value
     };
   }
 
@@ -44,6 +45,7 @@
     if (s.te != null) el["trim-edge"].value = s.te;
     if (s.tl != null) el["trim-len"].value = s.tl;
     if (s.mk) el["movement-kind"].value = s.mk;
+    if (s.bg) el.background.value = s.bg;
   }
 
   // mm -> a friendly length, in cm for small cuts and mm for the exact value.
@@ -139,6 +141,24 @@
         '</div>';
     }
 
+    var weightBlock = "";
+    if (r.weight) {
+      var wt = r.weight;
+      var verdict = wt.ok
+        ? 'That\'s within the ' + wt.limitKgM2 + ' kg/m² a ' + wt.label.toLowerCase() + ' background safely holds, with ' + wt.headroomKgM2 + ' kg/m² to spare.'
+        : 'That\'s over the ' + wt.limitKgM2 + ' kg/m² a ' + wt.label.toLowerCase() + ' background should carry. Overboard with a tile backer board, or batten and board out, before tiling — or use a thinner or lighter tile.';
+      weightBlock =
+        '<div class="result' + (wt.ok ? '' : ' warn') + '">' +
+          '<h3>Wall weight</h3>' +
+          '<div class="grid">' +
+            '<div class="cell big"><span class="k">Tile + adhesive</span><span class="v">' + wt.totalKgM2 + '<span class="u"> kg/m²</span></span></div>' +
+            '<div class="cell"><span class="k">Background holds</span><span class="v">' + wt.limitKgM2 + '<span class="u"> kg/m²</span></span></div>' +
+          '</div>' +
+          '<p class="msg">' + wt.tileKgM2 + ' kg/m² of tile at ' + wt.density + ' kg/dm³ plus ' + wt.adhesiveKgM2 + ' kg/m² of adhesive. ' + verdict +
+          ' Weight limits follow BS 5385-1; the tile density is editable for stone, which is heavier.</p>' +
+        '</div>';
+    }
+
     var movementBlock = "";
     if (r.movement) {
       var mv = r.movement;
@@ -176,6 +196,7 @@
       '</div>' +
       groutBlock +
       adhesiveBlock +
+      weightBlock +
       trimBlock +
       movementBlock +
       '<div class="result setout">' +
@@ -197,7 +218,8 @@
       groutDensity: s.gd, tubKg: s.tk, wet: !!s.wet,
       openings: (s.ow && s.oh) ? [{ w: s.ow, h: s.oh, unit: s.ru }] : [],
       trimEdgeM: s.te === "" ? undefined : s.te, trimLengthM: s.tl === "" ? undefined : s.tl,
-      movementKind: s.mk
+      movementKind: s.mk,
+      background: s.bg
     });
     var kind = render(r);
     if (window.Chip) {
